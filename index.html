@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Visual Novel Rules</title>
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:dark;--ink:#e8dcc4;--teal:#7fb5a8;--ember:#d9a441;--red:#d0675a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0;background:#0b1214;color:var(--ink);font-family:Spectral,Georgia,serif}
+#stage{position:fixed;inset:0;overflow:hidden;transition:background 1.2s}
+#stage::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(100deg,transparent 0 14px,rgba(160,200,200,.12) 14px 15px);animation:rain .6s linear infinite;opacity:var(--rain,.8);transition:opacity 1.2s}
+@keyframes rain{to{background-position:-30px 60px}}
+#stage.bad{box-shadow:inset 0 0 160px rgba(160,40,30,.55)}
+#stage.ok{box-shadow:inset 0 0 160px rgba(217,164,65,.35)}
+#eyes{position:absolute;right:16%;top:34%;display:flex;gap:26px;opacity:0;transition:opacity .6s}
+#eyes.on{opacity:1}
+#eyes i{width:16px;height:16px;border-radius:50%;background:#fff3c4;box-shadow:0 0 22px 8px rgba(255,214,120,.65)}
+#gauge{position:absolute;left:14px;top:90px;bottom:240px;width:3px;background:rgba(232,220,196,.18)}
+#gauge i{position:absolute;left:0;bottom:0;width:100%;background:var(--ember);transition:height 1s}
+#head{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:34px;right:16px}
+#head b{display:block;font-size:1.15rem;font-weight:600}
+#head span{font-style:italic;opacity:.7;font-size:.9rem}
+#box{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(780px,calc(100% - 24px));max-height:62vh;overflow-y:auto;background:rgba(9,14,16,.9);border:1px solid rgba(232,220,196,.2);border-radius:6px;padding:16px 20px;cursor:pointer}
+#who{display:block;font-weight:600;margin-bottom:6px;font-size:1rem}
+[data-k=v] #who{color:#f0d68a}[data-k=p] #who{color:var(--teal)}[data-k=d] #who{color:var(--ember)}[data-k=b] #who{color:var(--red)}[data-k=g] #who{color:var(--teal)}
+#txt{margin:0;font-size:1.12rem;line-height:1.6;max-width:68ch}
+[data-k=n] #txt{font-style:italic}
+#ch{display:grid;gap:8px;margin-top:12px}
+#ch button,#intro button.go{font:inherit;color:var(--ink);background:transparent;border:1px solid rgba(232,220,196,.4);border-radius:4px;padding:10px 14px;text-align:left;cursor:pointer}
+#ch button:hover,#intro button.go:hover{background:rgba(232,220,196,.12)}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+#intro{position:fixed;inset:0;z-index:5;background:#0b1214;overflow-y:auto;display:flex;justify-content:center;padding:32px 20px}
+#intro div{max-width:640px;margin:auto}
+#intro h1{font-size:clamp(2.2rem,8vw,3.6rem);margin:0 0 6px;font-weight:600;line-height:1.05}
+#intro p{margin:0 0 18px;line-height:1.6;opacity:.85}
+#intro dl{margin:10px 0 0;font-size:.95rem;line-height:1.5}#intro dt{color:var(--teal);font-weight:600}#intro dd{margin:0 0 8px}
+#intro summary{cursor:pointer;margin-bottom:6px}
+#intro button.go{margin-top:22px}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){#stage::before{animation:none}*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="intro"><div>
+<h1>Visual Novel Rules</h1>
+<p>Crónica introspectiva del descenso y ascenso académico en el Sistema Nacional de Institutos Tecnológicos. Cada decisión que tomes cambia tu camino fuera del pozo.</p>
+<details><summary>Léxico del abismo académico</summary><dl>
+<dt>Kataj</dt><dd>Ansiedad ante una fecha límite o evaluación.</dd>
+<dt>Teneyayi</dt><dd>Soledad de enfrentar el sistema sin conocer sus reglas.</dd>
+<dt>Overthink</dt><dd>El ruido interno que paraliza la acción.</dd>
+<dt>Nemiga</dt><dd>Insomnio cargando la incertidumbre académica.</dd>
+<dt>Pongoro</dt><dd>La pesadez donde el esfuerzo parece perder sentido.</dd>
+<dt>Tasukete</dt><dd>Ayuda: orientación normativa y respaldo institucional.</dd>
+<dt>Shenti</dt><dd>El cuerpo que resiste estudio, cansancio y prueba.</dd></dl></details>
+<button class="go" id="start">Comenzar</button>
+</div></div>
+<div id="stage">
+<div id="gauge"><i id="gf"></i></div>
+<div id="head"><b id="hn"></b><span id="hb"></span></div>
+<div id="eyes"><i></i><i></i></div>
+<div id="box" data-k="n"><span id="who"></span><p id="txt"></p><div id="ch"></div></div>
+</div>
+<script>
+const C=[
+{n:"El pozo de la desinformación",b:"Prólogo",d:[["N","Estaba tan cansada que mi shenti pedía que me detuviera. Era el peso invisible de semestres avanzando a ciegas por una institución cuyas reglas jamás me detuve a leer. Desde lo alto del pozo caía la lluvia; a mi derecha, al final del túnel, unos ojos brillaban como focos en la penumbra."],["V","Ven… El desconocimiento siempre te trae de vuelta al fondo. Cada piedra de este pozo la colocaste tú al ignorar tus derechos, tus obligaciones y tus tiempos."],["P","No quiero quedarme aquí. Cada vez que intento escalar sin saber dónde apoyar las manos, la roca se desprende. Es el bucle de repetir los mismos errores lo que duele."],["N","Comprendí una verdad cruda: la institución no acaba con el estudiante; es el estudiante quien sabotea su trayectoria cuando camina sin mapa. Para salir, necesitaba comprender cada norma y cada consecuencia."]]},
+{n:"La arquitectura del camino",b:"Capítulo 7: Planes y Programas de Estudio (Arts. 31 al 39)",d:[["N","Las líneas entrecruzadas del muro cobraron vida. El overthink golpeó mi mente: ¿cuántas materias faltan?, ¿por qué unas bloquean a otras?, ¿qué significa cada crédito?"],["V","Miras la retícula como un laberinto. Te inscribes sin revisar la seriación y olvidas que cada crédito mide el esfuerzo real."],["P","Solo quería avanzar rápido y llenar mi horario."],["V","Si saltas los cimientos, toda la estructura colapsa bajo tu propio peso."]],
+q:"Configuras tu semestre y notas que una asignatura fundamental tiene prerrequisitos y alta carga práctica. ¿Cómo procedes?",A:"Ignorar la estructura reticular y saturar el semestre con materias aisladas, sin revisar su seriación.",B:"Analizar el Plan de Estudios, respetar la seriación y equilibrar créditos teóricos y prácticos.",
+e:"El colapso de la retícula",x:"Las líneas se rompieron como cristal. Sin respetar prerrequisitos quedé bloqueada: materias cerradas, cruces de horario y rezago. Volví al fondo con nemiga interminable.",
+f:"Arts. 31, 33, 34 y 37: el plan de estudios es un Sistema de Créditos Académicos, flexible y reticular. El crédito expresa el impacto de los objetivos, la dificultad, el tiempo y la carga práctica de la asignatura. Ignorar la lógica reticular impide cursar asignaturas seriadas y compromete concluir a tiempo.",
+r:"Las líneas del muro se iluminaron. El Plan de Estudios es un mapa diseñado por academias y especialistas (Arts. 32 y 35). Con el primer tramo escalado, continué."},
+{n:"El espejismo del estío",b:"Capítulo 11: Cursos de Verano (Arts. 133 al 158)",d:[["N","El frío dio paso a un calor sofocante. Mi shenti estaba agotado, pero adelantar materias en seis semanas parecía la salida más rápida. En verano las reglas se vuelven más estrictas y condensadas."],["V","Seis semanas, tres horas diarias. Muchos creen que es un trámite ligero: no pagan a tiempo o abandonan sin consecuencias."],["P","Necesito aprovechar el verano, pero debo saber qué pasa si surge un problema o tengo adeudos."],["V","El verano no perdona el descuido administrativo."]],
+q:"Quieres inscribirte a un Curso de Verano, pero dudas de sus límites. ¿Qué decides?",A:"Inscribirte en tres asignaturas, pagar en la segunda semana y, si se complica, dejar de asistir sin avisar.",B:"Inscribirte máximo en dos asignaturas autorizadas, pagar antes de iniciar y, si requieres baja, tramitarla por escrito en las primeras cinco sesiones.",
+e:"El derrumbe en seis semanas",x:"El sistema rechazó el exceso de carga, el pago tardío invalidó mi registro y, al abandonar sin oficio, la asignatura quedó no acreditada. Caí al barro con una reprobación innecesaria.",
+f:"El curso dura seis semanas (Art. 140), con máximo dos asignaturas (Art. 150) y pago antes de iniciar (Art. 152). Quien adeuda Evaluaciones Especiales no puede inscribirse (Art. 149). La baja se pide por escrito a la División de Estudios Profesionales, con copia a Servicios Escolares, en las primeras cinco sesiones; si no, la materia queda no acreditada y sin devolución (Art. 153).",
+r:"Superé las seis semanas con disciplina. El calor se disipó y el muro me dejó subir otro nivel."},
+{n:"El reloj de los doce periodos",b:"Capítulo 12: Terminación de la Escolaridad (Arts. 159 y 160)",d:[["N","Doce antorchas ardían sobre la roca húmeda, una por semestre. La cera se consumía incluso cuando nadie miraba, y el teneyayi me apretó el pecho."],["V","Cada periodo que dejas pasar sin renovar tu inscripción consume tu tiempo. Cuando la duodécima llama se apaga, las puertas se cierran para siempre."],["P","Pensé que podía pausar mis estudios sin tramitar nada y sin que contara en mi plazo."],["V","La condición de alumno exige renovación constante."]],
+q:"Por agotamiento mental piensas dejar de asistir el próximo semestre. ¿Cuál es la decisión correcta?",A:"Desaparecer sin renovar ni gestionar una baja temporal, asumiendo que podrás volver cuando quieras.",B:"Renovar tu inscripción cada periodo o gestionar formalmente una baja temporal, respetando el máximo de periodos de la carrera.",
+e:"La extinción de la condición de alumno",x:"Las antorchas restantes se apagaron de golpe. Al intentar volver, había perdido mi condición de alumno y rebasado los plazos reglamentarios. La caída fue definitiva.",
+f:"Art. 159: la condición de alumno se pierde por interrumpir estudios mediante baja temporal, por no concluir dentro de los términos (mínimo 7 y máximo 12 periodos, contando aquellos sin reinscripción; Arts. 101 y 102) o por sanciones graves. Art. 160: debes renovar la inscripción cada periodo lectivo hasta terminar.",
+r:"Protegí la llama de cada periodo con reinscripción puntual y planeación. El horizonte se veía menos lejano."},
+{n:"El compromiso con la sociedad",b:"Capítulo 13: Servicio Social (Arts. 161 al 168)",d:[["N","Al setenta por ciento de la altura, la piedra se volvió escalones tallados con rostros humanos. Se oían voces de una comunidad que esperaba que el conocimiento saliera de las aulas."],["V","Muchos usan este paso para cubrir puestos laborales o lo inician sin convenio ni validación. Sus horas no valen nada."],["P","Quiero aportar a la comunidad, pero debo asegurarme de que el programa sea válido y esté autorizado."],["V","Sin convenio ni autorización oficial, tu tiempo se desvanece en el vacío."]],
+q:"Te ofrecen un proyecto informal en una empresa privada que te pagaría como empleado si firmas como servicio social. ¿Qué haces?",A:"Aceptar la oferta para cubrir una vacante laboral, sin convenio institucional ni autorización.",B:"Elegir un programa público, comunitario o institucional con convenio vigente y tramitar su autorización en Gestión Tecnológica y Vinculación.",
+e:"El esfuerzo invalidado",x:"Trabajé meses creyendo cumplir el requisito, pero la acreditación fue rechazada: era una relación laboral privada sin convenio oficial. Regresé al fondo con las manos vacías.",
+f:"Arts. 161, 163 y 165: el servicio social es temporal y obligatorio, y no cubre necesidades laborales ni da categoría de trabajador. Art. 164: se realiza en programas públicos, de desarrollo comunitario, investigación o apoyo institucional. Arts. 166 al 168: requiere convenios oficiales, es requisito previo a la titulación y solo vale con autorización de Gestión Tecnológica y Vinculación.",
+r:"Mi trabajo comunitario quedó respaldado por un convenio y validado. La luz de la boca del pozo iluminó por primera vez mi rostro."},
+{n:"La prueba de fuego profesional",b:"Capítulo 14: Residencias Profesionales (Arts. 169 al 180)",d:[["N","El viento exterior rozó mis hombros. Ante la penúltima cornisa, la Residencia Profesional, el kataj volvió: 640 horas mínimas, entre cuatro y seis meses, bajo un asesor interno y uno externo."],["V","Un paso en falso aquí cuesta veinte créditos. Algunos inician sin el porcentaje de créditos o adeudando materias."],["P","Debo cumplir cada requisito administrativo y académico antes del primer paso."],["V","Sin regularidad ni el setenta y cinco por ciento de créditos, ningún proyecto tiene validez."]],
+q:"Vas a iniciar tu Residencia, pero adeudas una asignatura y te falta constancia del 75% de créditos. ¿Cómo actúas?",A:"Empezar el proyecto por tu cuenta, sin ser alumno regular ni tener asignación oficial, esperando regularizarte después.",B:"Asegurar tu condición de regular con al menos 75% de créditos, obtener la asignación oficial y cumplir 640 horas en 4 a 6 meses.",
+e:"El proyecto no reconocido",x:"Invertí meses en un sistema complejo sin asignación ni regularidad. Servicios Escolares no pudo emitir el acta de los 20 créditos. El muro se desmoronó.",
+f:"Arts. 171, 173 y 174: la residencia dura de 4 a 6 meses con mínimo 640 horas, y exige ser alumno regular, tener aprobado al menos el 75% de créditos, estar dentro de los doce semestres y contar con asignación oficial de Estudios Profesionales y Gestión Tecnológica y Vinculación. Arts. 175 y 176: ambos asesores evalúan y el reporte final acredita los 20 créditos.",
+r:"Concluí mis 640 horas, avaladas por mis asesores. Los 20 créditos se sumaron a mi historial."},
+{n:"El umbral del título",b:"Capítulo 15: Certificación y Titulación (Arts. 181 al 192)",d:[["N","Llegué al borde superior. Un arco de piedra blanca conducía al horizonte profesional, pero una reja sellada exigía los requisitos finales del Título y del Acto de Recepción Profesional."],["V","Tienes tus créditos completos, pero te falta el inglés, tienes un adeudo en el laboratorio y no defines tu opción de titulación."],["P","No dejaré que un trámite inconcluso me impida cerrar este ciclo con dignidad."],["V","El jurado solo valida a quien demuestra disciplina integral en cada departamento."]],
+q:"Concluiste el 100% de las asignaturas y quieres presentar tu Acto de Recepción Profesional. ¿Cuál es la ruta correcta?",A:"Solicitar fecha de examen dejando pendiente el inglés y un adeudo de equipo en el centro de cómputo.",B:"Reunir 100% de créditos, servicio social, residencia, certificación de inglés y constancia de no adeudo, y cumplir una de las diez opciones de titulación.",
+e:"La reja cerrada en la meta",x:"Estudios Profesionales rechazó mi solicitud. Sin inglés ni cartas de no adeudo, el protocolo ante el jurado no podía celebrarse. Quedé atrapada en el umbral, viendo el exterior sin poder cruzar.",
+f:"Art. 190: para titularte debes aprobar todos los créditos, haber hecho servicio social, acreditar la residencia, certificar la comprensión de artículos técnico-científicos en inglés, no tener adeudos económicos ni de material, cubrir derechos y cumplir una de las diez opciones del Art. 191 (tesis, prototipos didácticos, investigación, promedio, residencia profesional, entre otras).",
+r:"Con cada inciso cumplido, el jurado validó mi formación. La reja se abrió por completo."},
+{n:"La balanza de la voz y el deber",b:"Capítulo 16: Derechos y Obligaciones (Arts. 193 al 200)",d:[["N","Fuera de la oscuridad profunda, recorrí los patios. La vida universitaria se sostiene en una balanza: derechos que protegen la dignidad y la libre expresión, obligaciones que cuidan el respeto y el patrimonio común."],["V","Tienes derecho a disentir en clase, ¿pero cómo? ¿Con argumentos y respeto, o interrumpiendo la cátedra y dañando lo que es de todos?"],["P","La libertad universitaria exige responsabilidad. Mi voz tiene fuerza cuando se apoya en la razón y el respeto."],["V","Toda garantía individual exige reciprocidad. Quien destruye el patrimonio del instituto responde por ello."]],
+q:"En clase surge un desacuerdo importante con un docente y notas que un equipo del laboratorio quedó dañado por descuido. ¿Cómo procedes?",A:"Alzar la voz faltando al respeto para imponer tu punto y ocultar el daño para evitar responsabilidades.",B:"Exponer tu punto con fundamento, orden y respeto, y reportar y reponer el daño conforme al reglamento.",
+e:"El desequilibrio de la convivencia",x:"La discusión degeneró en falta de respeto que anuló cualquier argumento válido, y ocultar el daño derivó en una sanción por negligencia y deterioro de bienes institucionales.",
+f:"Arts. 193 al 195: tienes derecho a enseñanza en igualdad, orientación, trato respetuoso y libertad de expresión, incluso para opinar distinto del profesor, con fundamento, orden y respeto. Art. 200: debes asistir con puntualidad, respetar a la comunidad, cuidar edificios y equipos, y reponer o pagar lo dañado por negligencia o dolo.",
+r:"El diálogo respetuoso enriqueció la cátedra y la honestidad fortaleció la confianza en la comunidad."},
+{n:"La voz colectiva y la democracia",b:"Capítulo 17: Organizaciones Estudiantiles (Arts. 201 al 248)",d:[["N","En la plaza central había estandartes y convocatorias. Representar a los compañeros exige legitimidad académica, transparencia financiera y respeto a los tiempos de campaña."],["V","El poder estudiantil seduce rápido. Algunos se postulan con materias reprobadas, recaudan cuotas no autorizadas o dejan propaganda pegada el día de la elección."],["P","Una organización estudiantil solo tiene autoridad moral cuando nace de una democracia limpia."],["V","La autonomía no significa ausencia de normas; el consejo electoral vigila cada compromiso firmado."]],
+q:"Eres parte de una planilla y faltan menos de doce horas para las votaciones. ¿Qué acción es obligatoria?",A:"Mantener la propaganda durante la jornada y pedir cuotas obligatorias para financiar actividades.",B:"Retirar toda la propaganda con doce horas de anticipación, no cobrar cuotas ni aceptar injerencia externa, y respetar el acta de compromisos.",
+e:"La anulación de la planilla",x:"El colegio electoral restó votos por la propaganda y revocó el registro por recaudación indebida. El proyecto murió antes de abrir las urnas.",
+f:"Art. 216: para integrar una organización estudiantil se requiere ser alumno regular, tener entre 30% y 80% de créditos y no tener reportes disciplinarios. Art. 214: prohíbe disponer de cuotas de alumnos o de la institución. Arts. 245 al 247: la propaganda dura máximo 48 horas, se retira 12 horas antes de la jornada (bajo pena de resta de votos) y no se acepta apoyo de particulares o autoridades ajenas.",
+r:"La jornada transcurrió con equidad, transparencia y legitimidad ante toda la comunidad."},
+{n:"La línea de la integridad",b:"Capítulo 18: Disciplina Escolar (Arts. 249 al 257)",d:[["N","Frente al edificio académico, un espejo oscuro reflejaba no lo que aparentamos, sino lo que hacemos cuando nadie nos vigila. Una decisión impulsiva puede borrar en segundos años de sacrificio."],["V","La presión del examen nubla el juicio. Un acordeón, una suplantación o alterar un documento parece una salida fácil… hasta que el acta llega a la Dirección."],["P","Prefiero una calificación difícil con honestidad que una mancha permanente o una baja definitiva."],["V","Quien causa baja definitiva del Sistema Nacional de Institutos Tecnológicos pierde el acceso a todos los planteles."]],
+q:"En una evaluación determinante sientes mucho kataj porque un tema no te quedó claro, y un compañero te ofrece fraude académico o suplantar tu identidad. ¿Qué decides?",A:"Aceptar el fraude o la suplantación para asegurar una calificación aprobatoria rápida.",B:"Rechazarlo, presentar la evaluación con honestidad y, de ser necesario, recurrir a las oportunidades reglamentarias de regularización.",
+e:"La sanción disciplinaria",x:"El docente detectó el fraude: examen anulado con calificación reprobatoria, falta asentada en mi expediente y suspensión definitiva en la asignatura, con el Examen Especial bajo vigilancia estricta como única vía.",
+f:"Art. 251: el fraude y la suplantación implican anulación del examen con calificación reprobatoria, amonestación, anotación en el expediente con aviso al padre o tutor, suspensión de derechos hasta por una semana e incluso suspensión definitiva de la asignatura. Arts. 252 y 253: novatadas, alcohol o drogas, falsificar documentos oficiales, tomar instalaciones o poner en riesgo a la comunidad se sancionan con suspensión semestral o baja definitiva.",
+r:"Con la integridad de la Opción B, mi historial permaneció limpio y mi conciencia tranquila."},
+{n:"La formación integral del ser",b:"Capítulo 21: Actividades Extraescolares (Arts. 272 y 273)",d:[["N","El recorrido llegaba a su desenlace bajo un cielo despejado. Ser profesionista tecnológico no es convertirse en una máquina que solo resuelve ecuaciones. El arte, el deporte y la ciencia mantienen viva la mente y equilibrado el shenti."],["V","Muchos creen que las actividades extraescolares son pérdida de tiempo, sin entender que forman el carácter, la salud y los créditos complementarios."],["P","Participar en actividades culturales, deportivas o técnicas me conecta con los demás y fortalece mi identidad."],["V","Un estudiante equilibrado en mente y cuerpo jamás vuelve a caer en la oscuridad de la indiferencia."]],
+q:"Tienes la oportunidad de integrarte a una actividad extraescolar durante el semestre. ¿Cómo aprovechas ese espacio?",A:"Despreciar las actividades culturales, deportivas, cívicas y técnicas por irrelevantes.",B:"Participar en actividades técnicas, artísticas, deportivas, cívicas o culturales para fortalecer tu desarrollo integral.",
+e:"El aislamiento técnico",x:"El cansancio mental se acumuló sin válvula de escape. Sin convivencia, arte ni concursos, la rutina se volvió gris y solitaria, y retrasé los requisitos de formación integral.",
+f:"Arts. 272 y 273: las actividades extraescolares buscan la educación integral, los valores y la formación interdisciplinaria. Tienen seis vertientes: técnicas, cívicas, artísticas, deportivas, culturales y sociales.",
+r:"Comprendí el sentido completo de mi paso por el Tecnológico. La luz del sol iluminó cada rincón del campus."},
+{n:"La salida del pozo",b:"Epílogo",d:[["N","Miré mis manos: ya no había lodo ni cicatrices; sostenían mi credencial vigente, mi carga ordenada y la certeza de cada paso hasta mi titulación. El pozo no desapareció: dejó de ser abismo porque ahora tenía luz en cada nivel."],["N","La voz al final del túnel ya no era una amenaza. Era mi propia conciencia académica: conocer nuestras normas nos hace libres, responsables y capaces de construir una comunidad más justa."],["P","Ya no hay kataj ni teneyayi. Conozco mis derechos, asumo mis obligaciones y sé exactamente hacia dónde camino."]]}
+];
+const $=i=>document.getElementById(i);let ci=0,li=0,adv=null;
+function ui(k,who,text,btns){$("box").dataset.k=k;$("who").textContent=who;$("txt").textContent=text;const ch=$("ch");ch.innerHTML="";adv=btns?null:adv;(btns||[]).forEach(([l,f])=>{const b=document.createElement("button");b.textContent=l;b.onclick=e=>{e.stopPropagation();f()};ch.append(b)});if(btns&&btns[0])ch.firstChild.focus({preventScroll:true});$("box").scrollTop=0}
+function scene(){const c=C[ci],p=ci/(C.length-1);$("hn").textContent=c.n;$("hb").textContent=c.b;$("gf").style.height=(p*100)+"%";const s=$("stage");s.className="";s.style.setProperty("--rain",Math.max(0,.8-p*1.1));s.style.background="linear-gradient(180deg,hsl(195 30% "+(16+p*42)+"%),hsl(200 28% "+(5+p*30)+"%))";li=0;line()}
+function line(){const c=C[ci];if(li>=c.d.length)return c.q?ask():next();const[w,t]=c.d[li];$("eyes").className=w=="V"&&ci<10?"on":"";ui(w.toLowerCase(),w=="V"?"Voz del abismo":w=="P"?"Protagonista":"",t);adv=()=>{li++;line()}}
+function ask(){const c=C[ci];$("stage").classList.remove("bad","ok");$("eyes").className="";ui("d","Punto de decisión",c.q,[["Opción A: "+c.A,bad],["Opción B: "+c.B,good]])}
+function why(then,lbl){const c=C[ci];ui("g","Fundamento reglamentario",c.f,[[lbl,then]])}
+function bad(){const c=C[ci];$("stage").classList.add("bad");ui("b","Consecuencia de decisión errónea: "+c.e,c.x,[["Ver fundamento",()=>why(ask,"Volver a decidir")]])}
+function good(){const c=C[ci];$("stage").classList.add("ok");ui("g","Resolución correcta",c.r,[["Ver fundamento",()=>why(next,"Continuar")]])}
+function next(){ci++;if(ci<C.length)return scene();$("eyes").className="";ui("n","Fin","Conoces el mapa. Cada norma que aprendiste es un apoyo para tu camino.",[["Jugar de nuevo",()=>{ci=0;scene()}]])}
+$("box").onclick=()=>adv&&adv();
+document.addEventListener("keydown",e=>{if((e.key==" "||e.key=="Enter")&&document.activeElement.tagName!="BUTTON"&&adv){e.preventDefault();adv()}});
+$("start").onclick=()=>{$("intro").hidden=true;scene()};$("start").focus();
+</script>
+</body>
+</html>
