@@ -126,7 +126,7 @@ r:"Comprendí el sentido completo de mi paso por el Tecnológico. La luz del sol
 ];
 const $=i=>document.getElementById(i);let ci=0,li=0,adv=null,voz=true;const SS=window.speechSynthesis;
 const MAN=/pablo|raul|raúl|jorge|diego|juan|carlos|enrique|alvaro|álvaro|miguel|andres|andrés|pedro|male|hombre/i;
-const EXT=["jpg","png","webp","jpeg","JPG","PNG"];let bgTok=0;
+const EXT=["jpg","png","webp","jpeg","jfif","JPG","PNG","JFIF"];let bgTok=0;
 function setbg(n,p){const b=$("bg"),tok=++bgTok;b.classList.remove("on");(function t(i){if(i>=EXT.length||tok!=bgTok)return;const u=`fondos/fondo-${n}.${EXT[i]}`,im=new Image();im.onload=()=>setTimeout(()=>{if(tok!=bgTok)return;b.style.backgroundImage=`linear-gradient(rgba(5,10,12,.25),rgba(5,10,12,.25)),url("${u}")`;b.classList.add("on");$("stage").style.setProperty("--rain",Math.max(0,.3-p*.4))},350);im.onerror=()=>t(i+1);im.src=u})(0)}
 let cur;
 function say(k,t,id){if(SS)SS.cancel();if(cur){cur.pause();cur=null}if(!voz)return;if(!id)return tts(k,t);const a=new Audio("audio/"+id+".mp3");cur=a;const fb=()=>{if(cur==a){cur=null;tts(k,t)}};a.onerror=fb;a.play().catch(fb)}
