@@ -19,7 +19,7 @@ html,body{height:100%;margin:0;background:#0b1214;color:var(--ink);font-family:S
 #eyes i{width:16px;height:16px;border-radius:50%;background:#fff3c4;box-shadow:0 0 22px 8px rgba(255,214,120,.65)}
 #gauge{position:absolute;left:14px;top:90px;bottom:240px;width:3px;background:rgba(232,220,196,.18)}
 #gauge i{position:absolute;left:0;bottom:0;width:100%;background:var(--ember);transition:height 1s}
-#head{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:34px;right:16px}
+#head{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));left:34px;right:110px}
 #head b{display:block;font-size:1.15rem;font-weight:600}
 #head span{font-style:italic;opacity:.7;font-size:.9rem}
 #box{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(780px,calc(100% - 24px));max-height:62vh;overflow-y:auto;background:rgba(9,14,16,.9);border:1px solid rgba(232,220,196,.2);border-radius:6px;padding:16px 20px;cursor:pointer}
@@ -38,6 +38,8 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outlin
 #intro dl{margin:10px 0 0;font-size:.95rem;line-height:1.5}#intro dt{color:var(--teal);font-weight:600}#intro dd{margin:0 0 8px}
 #intro summary{cursor:pointer;margin-bottom:6px}
 #intro button.go{margin-top:22px}
+#vox,#mus{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;font:inherit;font-size:.85rem;color:var(--ink);background:rgba(9,14,16,.7);border:1px solid rgba(232,220,196,.4);border-radius:4px;padding:6px 10px;cursor:pointer}
+#mus{top:calc(52px + env(safe-area-inset-top,0px))}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:reduce){#stage::before{animation:none}*{transition:none!important}}
 </style>
@@ -60,6 +62,8 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outlin
 <div id="gauge"><i id="gf"></i></div>
 <div id="head"><b id="hn"></b><span id="hb"></span></div>
 <div id="eyes"><i></i><i></i></div>
+<button id="vox" aria-pressed="true">Voz: sí</button>
+<button id="mus" aria-pressed="true">Música: sí</button>
 <div id="box" data-k="n"><span id="who"></span><p id="txt"></p><div id="ch"></div></div>
 </div>
 <script>
@@ -117,18 +121,27 @@ f:"Arts. 272 y 273: las actividades extraescolares buscan la educación integral
 r:"Comprendí el sentido completo de mi paso por el Tecnológico. La luz del sol iluminó cada rincón del campus."},
 {n:"La salida del pozo",b:"Epílogo",d:[["N","Miré mis manos: ya no había lodo ni cicatrices; sostenían mi credencial vigente, mi carga ordenada y la certeza de cada paso hasta mi titulación. El pozo no desapareció: dejó de ser abismo porque ahora tenía luz en cada nivel."],["N","La voz al final del túnel ya no era una amenaza. Era mi propia conciencia académica: conocer nuestras normas nos hace libres, responsables y capaces de construir una comunidad más justa."],["P","Ya no hay kataj ni teneyayi. Conozco mis derechos, asumo mis obligaciones y sé exactamente hacia dónde camino."]]}
 ];
-const $=i=>document.getElementById(i);let ci=0,li=0,adv=null;
-function ui(k,who,text,btns){$("box").dataset.k=k;$("who").textContent=who;$("txt").textContent=text;const ch=$("ch");ch.innerHTML="";adv=btns?null:adv;(btns||[]).forEach(([l,f])=>{const b=document.createElement("button");b.textContent=l;b.onclick=e=>{e.stopPropagation();f()};ch.append(b)});if(btns&&btns[0])ch.firstChild.focus({preventScroll:true});$("box").scrollTop=0}
-function scene(){const c=C[ci],p=ci/(C.length-1);$("hn").textContent=c.n;$("hb").textContent=c.b;$("gf").style.height=(p*100)+"%";const s=$("stage");s.className="";s.style.setProperty("--rain",Math.max(0,.8-p*1.1));s.style.background="linear-gradient(180deg,hsl(195 30% "+(16+p*42)+"%),hsl(200 28% "+(5+p*30)+"%))";li=0;line()}
-function line(){const c=C[ci];if(li>=c.d.length)return c.q?ask():next();const[w,t]=c.d[li];$("eyes").className=w=="V"&&ci<10?"on":"";ui(w.toLowerCase(),w=="V"?"Voz del abismo":w=="P"?"Protagonista":"",t);adv=()=>{li++;line()}}
-function ask(){const c=C[ci];$("stage").classList.remove("bad","ok");$("eyes").className="";ui("d","Punto de decisión",c.q,[["Opción A: "+c.A,bad],["Opción B: "+c.B,good]])}
-function why(then,lbl){const c=C[ci];ui("g","Fundamento reglamentario",c.f,[[lbl,then]])}
-function bad(){const c=C[ci];$("stage").classList.add("bad");ui("b","Consecuencia de decisión errónea: "+c.e,c.x,[["Ver fundamento",()=>why(ask,"Volver a decidir")]])}
-function good(){const c=C[ci];$("stage").classList.add("ok");ui("g","Resolución correcta",c.r,[["Ver fundamento",()=>why(next,"Continuar")]])}
+const $=i=>document.getElementById(i);let ci=0,li=0,adv=null,voz=true;const SS=window.speechSynthesis;
+const MAN=/pablo|raul|raúl|jorge|diego|juan|carlos|enrique|alvaro|álvaro|miguel|andres|andrés|pedro|male|hombre/i;
+let cur;
+function say(k,t,id){if(SS)SS.cancel();if(cur){cur.pause();cur=null}if(!voz)return;if(!id)return tts(k,t);const a=new Audio("audio/"+id+".mp3");cur=a;const fb=()=>{if(cur==a){cur=null;tts(k,t)}};a.onerror=fb;a.play().catch(fb)}
+function tts(k,t){if(!SS)return;SS.cancel();if(!voz)return;const a=SS.getVoices().filter(x=>/^es/i.test(x.lang)).sort((x,y)=>/MX/i.test(y.lang)-/MX/i.test(x.lang)),m=a.filter(x=>MAN.test(x.name)),pool=m.length?m:a,v=pool.length?pool[({v:0,p:1}[k]??2)%pool.length]:null,u=new SpeechSynthesisUtterance(t);if(v)u.voice=v;u.lang=v?v.lang:"es-MX";u.pitch=k=="v"?.1:k=="p"?.95:k=="b"?.5:.6;u.rate=k=="v"?.72:k=="p"?1.05:.9;SS.speak(u)}
+let mus=true,AC,mg,o2,fl;
+function hit(f,d,v){if(!AC||!mus)return;const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}
+function music(){if(!mus){if(mg)mg.gain.setTargetAtTime(0,AC.currentTime,.4);return}if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=0;fl=AC.createBiquadFilter();fl.type="lowpass";fl.frequency.value=380;const o1=AC.createOscillator(),lf=AC.createOscillator(),lg=AC.createGain();o2=AC.createOscillator();o1.type=o2.type="sawtooth";o1.frequency.value=55;o2.frequency.value=58.3;lf.frequency.value=.07;lg.gain.value=180;lf.connect(lg);lg.connect(fl.frequency);o1.connect(fl);o2.connect(fl);fl.connect(mg);mg.connect(AC.destination);o1.start();o2.start();lf.start();setInterval(()=>{if(ci<10){hit(48,.35,.25);setTimeout(()=>hit(44,.3,.18),260)}},2600)}AC.resume();mg.gain.setTargetAtTime(.07,AC.currentTime,.8)}
+function ui(k,who,text,btns,id){$("box").dataset.k=k;$("who").textContent=who;$("txt").textContent=text;const ch=$("ch");ch.innerHTML="";adv=btns?null:adv;(btns||[]).forEach(([l,f])=>{const b=document.createElement("button");b.textContent=l;b.onclick=e=>{e.stopPropagation();f()};ch.append(b)});if(btns&&btns[0])ch.firstChild.focus({preventScroll:true});$("box").scrollTop=0;say(k,text,id)}
+function scene(){const c=C[ci],p=ci/(C.length-1);$("hn").textContent=c.n;$("hb").textContent=c.b;$("gf").style.height=(p*100)+"%";const s=$("stage");s.className="";s.style.setProperty("--rain",Math.max(0,.8-p*1.1));s.style.background="linear-gradient(180deg,hsl(195 30% "+(16+p*42)+"%),hsl(200 28% "+(5+p*30)+"%))";li=0;if(AC){o2.frequency.setTargetAtTime(58.3+p*24.2,AC.currentTime,2);fl.frequency.setTargetAtTime(380+p*900,AC.currentTime,2)}line()}
+function line(){const c=C[ci];if(li>=c.d.length)return c.q?ask():next();const[w,t]=c.d[li];$("eyes").className=w=="V"&&ci<10?"on":"";ui(w.toLowerCase(),w=="V"?"Voz del abismo":w=="P"?"Protagonista":"",t,0,ci+"-"+li);adv=()=>{li++;line()}}
+function ask(){const c=C[ci];$("stage").classList.remove("bad","ok");$("eyes").className="";ui("d","Punto de decisión",c.q,[["Opción A: "+c.A,bad],["Opción B: "+c.B,good]],ci+"-q")}
+function why(then,lbl){const c=C[ci];ui("g","Fundamento reglamentario",c.f,[[lbl,then]],ci+"-f")}
+function bad(){const c=C[ci];$("stage").classList.add("bad");hit(70,1.2,.4);ui("b","Consecuencia de decisión errónea: "+c.e,c.x,[["Ver fundamento",()=>why(ask,"Volver a decidir")]],ci+"-x")}
+function good(){const c=C[ci];$("stage").classList.add("ok");ui("g","Resolución correcta",c.r,[["Ver fundamento",()=>why(next,"Continuar")]],ci+"-r")}
 function next(){ci++;if(ci<C.length)return scene();$("eyes").className="";ui("n","Fin","Conoces el mapa. Cada norma que aprendiste es un apoyo para tu camino.",[["Jugar de nuevo",()=>{ci=0;scene()}]])}
 $("box").onclick=()=>adv&&adv();
+$("vox").onclick=()=>{voz=!voz;$("vox").textContent="Voz: "+(voz?"sí":"no");$("vox").setAttribute("aria-pressed",voz);if(!voz){if(SS)SS.cancel();if(cur){cur.pause();cur=null}}};
 document.addEventListener("keydown",e=>{if((e.key==" "||e.key=="Enter")&&document.activeElement.tagName!="BUTTON"&&adv){e.preventDefault();adv()}});
-$("start").onclick=()=>{$("intro").hidden=true;scene()};$("start").focus();
+$("mus").onclick=()=>{mus=!mus;$("mus").textContent="Música: "+(mus?"sí":"no");$("mus").setAttribute("aria-pressed",mus);music()};
+$("start").onclick=()=>{$("intro").hidden=true;music();scene()};$("start").focus();
 </script>
 </body>
 </html>
