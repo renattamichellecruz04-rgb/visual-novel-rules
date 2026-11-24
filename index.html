@@ -26,7 +26,7 @@ html,body{height:100%;margin:0;background:#0b1214;color:var(--ink);font-family:S
 #head span{font-style:italic;opacity:.7;font-size:.9rem}
 #box{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(780px,calc(100% - 24px));max-height:62vh;overflow-y:auto;background:linear-gradient(180deg,rgba(14,22,25,.82),rgba(7,11,13,.92));-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(232,220,196,.22);border-top-color:rgba(217,164,65,.5);border-radius:8px;padding:16px 22px;cursor:pointer;z-index:2;box-shadow:0 10px 40px rgba(0,0,0,.5)}
 #who{display:block;font-weight:600;margin-bottom:8px;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase}
-[data-k=v] #who{color:#f0d68a}[data-k=p] #who{color:var(--teal)}[data-k=d] #who{color:var(--ember)}[data-k=b] #who{color:var(--red)}[data-k=g] #who{color:var(--teal)}
+[data-k=v] #who{color:#f0d68a}[data-k=p] #who{color:var(--teal)}[data-k=d] #who{color:var(--ember)}[data-k=b] #who{color:var(--red)}[data-k=g] #who{color:var(--teal)}[data-k=o] #who{color:#6fcf97}
 #txt{margin:0;font-size:1.12rem;line-height:1.6;max-width:68ch}
 [data-k=n] #txt{font-style:italic}
 #ch{display:grid;gap:8px;margin-top:12px}
@@ -69,6 +69,15 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outlin
 #veil.on #vk{animation:ti 1.2s ease-out both}
 #veil.on #vt{animation:ti 1.4s .25s ease-out both}
 #veil.on #vt::after{content:"";display:block;height:1px;width:0;margin:20px auto 0;background:var(--ember);animation:ln 1.6s .7s ease-out forwards}
+#fx{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .5s}
+#fx.bad{opacity:1;box-shadow:inset 0 0 150px 35px rgba(200,30,25,.8);background:radial-gradient(ellipse at center,transparent 45%,rgba(160,20,15,.4));animation:fl .9s ease-out}
+#fx.ok{opacity:1;box-shadow:inset 0 0 150px 35px rgba(50,190,110,.75);background:radial-gradient(ellipse at center,transparent 45%,rgba(30,150,85,.35));animation:fl .9s ease-out}
+@keyframes fl{0%{filter:brightness(2.4)}100%{filter:none}}
+@keyframes sk{20%,60%{transform:translateX(calc(-50% - 9px))}40%,80%{transform:translateX(calc(-50% + 9px))}}
+#box.sh{animation:sk .45s}
+#box[data-k=b]{border-color:rgba(208,103,90,.85);border-top-color:#d0675a}
+#box[data-k=o]{border-color:rgba(111,207,151,.8);border-top-color:#6fcf97}
+@media (prefers-reduced-motion:reduce){#fx,#box.sh{animation:none!important}}
 @media (prefers-reduced-motion:reduce){#stage::before,#bg.on,#bg2.on,#eyes i{animation:none}*{transition:none!important}}
 </style>
 </head>
@@ -89,6 +98,7 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outlin
 <div id="stage">
 <div id="bg"></div>
 <div id="bg2"></div>
+<div id="fx"></div>
 <div id="veil" class="on"><div><small id="vk"></small><h2 id="vt"></h2></div></div>
 <div id="gauge"><i id="gf"></i></div>
 <div id="head"><b id="hn"></b><span id="hb"></span></div>
@@ -168,16 +178,17 @@ let mus=true,AC,mg,o2,fl;
 function hit(f,d,v){if(!AC||!mus)return;const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}
 function music(){if(!mus){if(mg)mg.gain.setTargetAtTime(0,AC.currentTime,.4);return}if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=0;fl=AC.createBiquadFilter();fl.type="lowpass";fl.frequency.value=380;const o1=AC.createOscillator(),lf=AC.createOscillator(),lg=AC.createGain();o2=AC.createOscillator();o1.type=o2.type="sawtooth";o1.frequency.value=55;o2.frequency.value=58.3;lf.frequency.value=.07;lg.gain.value=180;lf.connect(lg);lg.connect(fl.frequency);o1.connect(fl);o2.connect(fl);fl.connect(mg);mg.connect(AC.destination);o1.start();o2.start();lf.start();setInterval(()=>{if(ci<10){hit(48,.35,.25);setTimeout(()=>hit(44,.3,.18),260)}},2600)}AC.resume();mg.gain.setTargetAtTime(.07,AC.currentTime,.8)}
 function ui(k,who,text,btns,id){$("box").dataset.k=k;$("who").textContent=who;type(text);const ch=$("ch");ch.innerHTML="";adv=btns?null:adv;(btns||[]).forEach(([l,f])=>{const b=document.createElement("button");b.textContent=l;b.onclick=e=>{e.stopPropagation();f()};ch.append(b)});if(btns&&btns[0])ch.firstChild.focus({preventScroll:true});$("box").scrollTop=0;say(k,text,id)}
+function fx(k){const f=$("fx");f.className=k||"";if(k=="bad"){const b=$("box");b.classList.remove("sh");void b.offsetWidth;b.classList.add("sh")}}
 let skip=null,st=0;
 function scene(){const c=C[ci],p=ci/(C.length-1),t=++st,s=$("stage"),v=$("veil");adv=null;s.classList.add("tr");$("eyes").className="";$("vk").textContent=c.b;$("vt").textContent=c.n;v.classList.remove("on");void v.offsetWidth;v.classList.add("on");setbg(ci+1,p);let a=0,d=0;
-const ap=()=>{if(a||t!=st)return;a=1;$("hn").textContent=c.n;$("hb").textContent=c.b;$("gf").style.height=(p*100)+"%";s.classList.remove("bad","ok");s.style.background="linear-gradient(180deg,hsl(190 12% "+(12+p*38)+"%),hsl(195 14% "+(4+p*24)+"%))";if(AC){o2.frequency.setTargetAtTime(58.3+p*24.2,AC.currentTime,2);fl.frequency.setTargetAtTime(380+p*900,AC.currentTime,2)}};
+const ap=()=>{if(a||t!=st)return;a=1;$("hn").textContent=c.n;$("hb").textContent=c.b;$("gf").style.height=(p*100)+"%";fx();s.style.background="linear-gradient(180deg,hsl(190 12% "+(12+p*38)+"%),hsl(195 14% "+(4+p*24)+"%))";if(AC){o2.frequency.setTargetAtTime(58.3+p*24.2,AC.currentTime,2);fl.frequency.setTargetAtTime(380+p*900,AC.currentTime,2)}};
 const go=()=>{if(d||t!=st)return;ap();d=1;skip=null;v.classList.remove("on");s.classList.remove("tr");li=0;line()};
 skip=go;setTimeout(ap,400);setTimeout(go,3200)}
 function line(){const c=C[ci];if(li>=c.d.length)return c.q?ask():next();const[w,t]=c.d[li];$("eyes").className=w=="V"&&ci<10?"on":"";ui(w.toLowerCase(),w=="V"?"Voz del abismo":w=="P"?"Protagonista":"",t,0,ci+"-"+li);adv=()=>{li++;line()}}
-function ask(){const c=C[ci];$("stage").classList.remove("bad","ok");$("eyes").className="";ui("d","Punto de decisión",c.q,[["Opción A: "+c.A,bad],["Opción B: "+c.B,good]],ci+"-q")}
+function ask(){const c=C[ci];fx();$("eyes").className="";ui("d","Punto de decisión",c.q,[["Opción A: "+c.A,bad],["Opción B: "+c.B,good]],ci+"-q")}
 function why(then,lbl){const c=C[ci];ui("g","Fundamento reglamentario",c.f,[[lbl,then]],ci+"-f")}
-function bad(){const c=C[ci];$("stage").classList.add("bad");hit(70,1.2,.4);ui("b","Consecuencia de decisión errónea: "+c.e,c.x,[["Ver fundamento",()=>why(ask,"Volver a decidir")]],ci+"-x")}
-function good(){const c=C[ci];$("stage").classList.add("ok");ui("g","Resolución correcta",c.r,[["Ver fundamento",()=>why(next,"Continuar")]],ci+"-r")}
+function bad(){const c=C[ci];fx("bad");hit(70,1.2,.4);ui("b","✗ Decisión errónea: "+c.e,c.x,[["Ver fundamento",()=>why(ask,"Volver a decidir")]],ci+"-x")}
+function good(){const c=C[ci];fx("ok");hit(392,.7,.16);setTimeout(()=>hit(587,.9,.12),160);ui("o","✓ Resolución correcta",c.r,[["Ver fundamento",()=>why(next,"Continuar")]],ci+"-r")}
 function next(){ci++;if(ci<C.length)return scene();$("eyes").className="";ui("n","Fin","Conoces el mapa. Cada norma que aprendiste es un apoyo para tu camino.",[["Jugar de nuevo",()=>{ci=0;scene()}]])}
 $("box").onclick=nxt;$("veil").onclick=()=>skip&&skip();
 $("vox").onclick=()=>{voz=!voz;$("vox").textContent="Voz: "+(voz?"sí":"no");$("vox").setAttribute("aria-pressed",voz);if(!voz){if(SS)SS.cancel();if(cur){cur.pause();cur=null}}};
