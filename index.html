@@ -80,11 +80,11 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outlin
 .sp{display:none;position:absolute;bottom:-5vh;z-index:0;height:90vh;width:46vw;object-fit:contain;object-position:center bottom;filter:brightness(.5) saturate(.7);transform:translateY(16px) scale(.97);transition:filter .45s,transform .45s,opacity .7s;pointer-events:none}
 .sp.ld{display:block}
 .sp.gone{display:none!important}
-#spP{left:2vw}#spA{right:2vw}
+#spP{left:2vw;height:99vh;width:50vw}#spA{right:2vw}
 .sp.nt{filter:brightness(.8) saturate(.9);transform:none}
 .sp.act{filter:none;transform:translateY(-6px) scale(1.02)}
 #stage.tr .sp{opacity:0;transform:translateY(40px)}
-@media (max-aspect-ratio:1/1){.sp{height:64vh;width:62vw;bottom:18vh}#spP{left:-8vw}#spA{right:-8vw}}
+@media (max-aspect-ratio:1/1){.sp{height:64vh;width:62vw;bottom:18vh}#spP{left:-8vw;height:70vh;width:68vw}#spA{right:-8vw}}
 @media (prefers-reduced-motion:reduce){#fx,#box.sh{animation:none!important}}
 @media (prefers-reduced-motion:reduce){#stage::before,#bg.on,#bg2.on,#eyes i{animation:none}*{transition:none!important}}
 </style>
@@ -186,16 +186,19 @@ function say(k,t,id){if(SS)SS.cancel();if(cur){cur.pause();cur=null}if(!voz)retu
 function tts(k,t){if(!SS)return;SS.cancel();if(!voz)return;const a=SS.getVoices().filter(x=>/^es/i.test(x.lang)).sort((x,y)=>/MX/i.test(y.lang)-/MX/i.test(x.lang)),m=a.filter(x=>MAN.test(x.name)),pool=m.length?m:a,v=pool.length?pool[({v:0,p:1}[k]??2)%pool.length]:null,u=new SpeechSynthesisUtterance(t);if(v)u.voice=v;u.lang=v?v.lang:"es-MX";u.pitch=k=="v"?.1:k=="p"?.95:k=="b"?.5:.6;u.rate=k=="v"?.72:k=="p"?1.05:.9;SS.speak(u)}
 let mus=true,AC,mg,o2,fl;
 function hit(f,d,v){if(!AC||!mus)return;const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime;o.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}
-function music(){if(!mus){if(mg)mg.gain.setTargetAtTime(0,AC.currentTime,.4);return}if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=0;fl=AC.createBiquadFilter();fl.type="lowpass";fl.frequency.value=380;const o1=AC.createOscillator(),lf=AC.createOscillator(),lg=AC.createGain();o2=AC.createOscillator();o1.type=o2.type="sawtooth";o1.frequency.value=55;o2.frequency.value=58.3;lf.frequency.value=.07;lg.gain.value=180;lf.connect(lg);lg.connect(fl.frequency);o1.connect(fl);o2.connect(fl);fl.connect(mg);mg.connect(AC.destination);o1.start();o2.start();lf.start();setInterval(()=>{if(ci<10){hit(48,.35,.25);setTimeout(()=>hit(44,.3,.18),260)}},2600)}AC.resume();mg.gain.setTargetAtTime(.07,AC.currentTime,.8)}
+function music(){if(mt)fade(mt,mus?.35:0,600);if(!mus){if(mg)mg.gain.setTargetAtTime(0,AC.currentTime,.4);return}if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();mg=AC.createGain();mg.gain.value=0;fl=AC.createBiquadFilter();fl.type="lowpass";fl.frequency.value=380;const o1=AC.createOscillator(),lf=AC.createOscillator(),lg=AC.createGain();o2=AC.createOscillator();o1.type=o2.type="sawtooth";o1.frequency.value=55;o2.frequency.value=58.3;lf.frequency.value=.07;lg.gain.value=180;lf.connect(lg);lg.connect(fl.frequency);o1.connect(fl);o2.connect(fl);fl.connect(mg);mg.connect(AC.destination);o1.start();o2.start();lf.start();setInterval(()=>{if(ci<10&&!mok){hit(48,.35,.25);setTimeout(()=>hit(44,.3,.18),260)}},2600)}AC.resume();mg.gain.setTargetAtTime(mok?0:.07,AC.currentTime,.8)}
 function ui(k,who,text,btns,id){spk(k);$("box").dataset.k=k;$("who").textContent=who;type(text);const ch=$("ch");ch.innerHTML="";adv=btns?null:adv;(btns||[]).forEach(([l,f])=>{const b=document.createElement("button");b.textContent=l;b.onclick=e=>{e.stopPropagation();f()};ch.append(b)});if(btns&&btns[0])ch.firstChild.focus({preventScroll:true});$("box").scrollTop=0;say(k,text,id)}
 const SPR={};
 function tryPath(b,xs,ok,no){(function t(i){if(i>=xs.length)return no&&no();const u=b+"."+xs[i],im=new Image();im.onload=()=>ok(u);im.onerror=()=>t(i+1);im.src=u})(0)}
 function loadSp(id,name){tryPath("personajes/"+name,["png","webp"],u=>{const e=$(id);e.src=u;e.classList.add("ld");SPR[id]=1})}
 function spk(k){const P=$("spP"),A=$("spA");[P,A].forEach(e=>e.classList.remove("act","nt"));if(k=="p")P.classList.add("act");else if(k=="v")A.classList.add("act");else{P.classList.add("nt");A.classList.add("nt")}}
+const MUS=[0,0,1,1,2,2,3,3,4,4,5,5];let mt=null,mi=-1,mok=false;
+function fade(a,to,ms,end){const f=a.volume,t0=performance.now();(function s(){const k=Math.min(1,(performance.now()-t0)/ms);a.volume=f+(to-f)*k;if(k<1)requestAnimationFrame(s);else if(end)end()})()}
+function track(){const i=MUS[ci];if(i==mi)return;mi=i;const old=mt,a=new Audio(`musica/musica-${i+1}.mp3`);a.loop=true;a.volume=0;mt=a;a.onerror=()=>{if(mt==a){mt=null;mok=false;if(AC&&mg&&mus)mg.gain.setTargetAtTime(.07,AC.currentTime,.8)}};a.play().then(()=>{if(mt!=a)return;mok=true;if(AC&&mg)mg.gain.setTargetAtTime(0,AC.currentTime,1.5);if(mus)fade(a,.35,2500)}).catch(()=>{});if(old)fade(old,0,2000,()=>old.pause())}
 function fx(k){const f=$("fx");f.className=k||"";if(k=="bad"){const b=$("box");b.classList.remove("sh");void b.offsetWidth;b.classList.add("sh")}}
 let skip=null,st=0;
 function scene(){const c=C[ci],p=ci/(C.length-1),t=++st,s=$("stage"),v=$("veil");adv=null;s.classList.add("tr");$("eyes").className="";$("vk").textContent=c.b;$("vt").textContent=c.n;v.classList.remove("on");void v.offsetWidth;v.classList.add("on");setbg(ci+1,p);let a=0,d=0;
-const ap=()=>{if(a||t!=st)return;a=1;$("hn").textContent=c.n;$("hb").textContent=c.b;$("spA").classList.toggle("gone",ci==C.length-1);$("gf").style.height=(p*100)+"%";fx();s.style.background="linear-gradient(180deg,hsl(190 12% "+(12+p*38)+"%),hsl(195 14% "+(4+p*24)+"%))";if(AC){o2.frequency.setTargetAtTime(58.3+p*24.2,AC.currentTime,2);fl.frequency.setTargetAtTime(380+p*900,AC.currentTime,2)}};
+const ap=()=>{if(a||t!=st)return;a=1;$("hn").textContent=c.n;$("hb").textContent=c.b;$("spA").classList.toggle("gone",ci==C.length-1);track();$("gf").style.height=(p*100)+"%";fx();s.style.background="linear-gradient(180deg,hsl(190 12% "+(12+p*38)+"%),hsl(195 14% "+(4+p*24)+"%))";if(AC){o2.frequency.setTargetAtTime(58.3+p*24.2,AC.currentTime,2);fl.frequency.setTargetAtTime(380+p*900,AC.currentTime,2)}};
 const go=()=>{if(d||t!=st)return;ap();d=1;skip=null;v.classList.remove("on");s.classList.remove("tr");li=0;line()};
 skip=go;setTimeout(ap,400);setTimeout(go,3200)}
 function line(){const c=C[ci];if(li>=c.d.length)return c.q?ask():next();const[w,t]=c.d[li];$("eyes").className=w=="V"&&ci<10&&!SPR.spA?"on":"";ui(w.toLowerCase(),w=="V"?"Voz del abismo":w=="P"?"Protagonista":"",t,0,ci+"-"+li);adv=()=>{li++;line()}}
