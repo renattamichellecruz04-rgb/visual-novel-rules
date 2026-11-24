@@ -80,11 +80,18 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outlin
 .sp{display:none;position:absolute;bottom:-5vh;z-index:0;height:90vh;width:46vw;object-fit:contain;object-position:center bottom;filter:brightness(.5) saturate(.7);transform:translateY(16px) scale(.97);transition:filter .45s,transform .45s,opacity .7s;pointer-events:none}
 .sp.ld{display:block}
 .sp.gone{display:none!important}
-#spP{left:2vw;height:99vh;width:50vw}#spA{right:2vw}
+#spP{left:2vw;height:104vh;width:52vw;bottom:-10vh}#spA{right:2vw}
 .sp.nt{filter:brightness(.8) saturate(.9);transform:none}
 .sp.act{filter:none;transform:translateY(-6px) scale(1.02)}
+#end{position:fixed;inset:0;z-index:8;background:#000;display:grid;place-items:center;text-align:center;padding:32px;opacity:0;pointer-events:none;transition:opacity 2.2s}
+#end.on{opacity:1;pointer-events:auto}
+#end p{margin:0 auto 1.6em;max-width:28ch;opacity:0;transition:opacity 2.4s;font-style:italic;line-height:1.45}
+#e1{font-size:clamp(1.5rem,5vw,2.4rem)}#e2{font-size:clamp(1.05rem,3.2vw,1.45rem);color:var(--teal)}
+#end small{display:block;opacity:0;transition:opacity 1.5s;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem}
+#end .v{opacity:1}
+#end.on.rt{cursor:pointer}
 #stage.tr .sp{opacity:0;transform:translateY(40px)}
-@media (max-aspect-ratio:1/1){.sp{height:64vh;width:62vw;bottom:18vh}#spP{left:-8vw;height:70vh;width:68vw}#spA{right:-8vw}}
+@media (max-aspect-ratio:1/1){.sp{height:64vh;width:62vw;bottom:18vh}#spP{left:-8vw;height:74vh;width:71vw;bottom:18vh}#spA{right:-8vw}}
 @media (prefers-reduced-motion:reduce){#fx,#box.sh{animation:none!important}}
 @media (prefers-reduced-motion:reduce){#stage::before,#bg.on,#bg2.on,#eyes i{animation:none}*{transition:none!important}}
 </style>
@@ -117,6 +124,7 @@ button:focus-visible,summary:focus-visible{outline:2px solid var(--ember);outlin
 <button id="mus" aria-pressed="true">Música: sí</button>
 <div id="box" data-k="n"><span id="who"></span><p id="txt"></p><div id="ch"></div></div>
 </div>
+<div id="end"><div><p id="e1"></p><p id="e2"></p><small id="e3">Toca para volver al inicio</small></div></div>
 <script>
 const C=[
 {n:"El pozo de la desinformación",b:"Prólogo",d:[["N","Estaba tan cansada que mi shenti pedía que me detuviera. Era el peso invisible de semestres avanzando a ciegas por una institución cuyas reglas jamás me detuve a leer. Desde lo alto del pozo caía la lluvia; a mi derecha, al final del túnel, unos ojos brillaban como focos en la penumbra."],["V","Ven… El desconocimiento siempre te trae de vuelta al fondo. Cada piedra de este pozo la colocaste tú al ignorar tus derechos, tus obligaciones y tus tiempos."],["P","No quiero quedarme aquí. Cada vez que intento escalar sin saber dónde apoyar las manos, la roca se desprende. Es el bucle de repetir los mismos errores lo que duele."],["N","Comprendí una verdad cruda: la institución no acaba con el estudiante; es el estudiante quien sabotea su trayectoria cuando camina sin mapa. Para salir, necesitaba comprender cada norma y cada consecuencia."]]},
@@ -195,6 +203,7 @@ function spk(k){const P=$("spP"),A=$("spA");[P,A].forEach(e=>e.classList.remove(
 const MUS=[0,0,1,1,2,2,3,3,4,4,5,5];let mt=null,mi=-1,mok=false;
 function fade(a,to,ms,end){const f=a.volume,t0=performance.now();(function s(){const k=Math.min(1,(performance.now()-t0)/ms);a.volume=f+(to-f)*k;if(k<1)requestAnimationFrame(s);else if(end)end()})()}
 function track(){const i=MUS[ci];if(i==mi)return;mi=i;const old=mt,a=new Audio(`musica/musica-${i+1}.mp3`);a.loop=true;a.volume=0;mt=a;a.onerror=()=>{if(mt==a){mt=null;mok=false;if(AC&&mg&&mus)mg.gain.setTargetAtTime(.07,AC.currentTime,.8)}};a.play().then(()=>{if(mt!=a)return;mok=true;if(AC&&mg)mg.gain.setTargetAtTime(0,AC.currentTime,1.5);if(mus)fade(a,.35,2500)}).catch(()=>{});if(old)fade(old,0,2000,()=>old.pause())}
+function ending(){st++;skip=null;adv=null;clearInterval(tw);tw=0;if(SS)SS.cancel();if(cur){cur.pause();cur=null}mi=-1;if(mt){const o=mt;mt=null;fade(o,0,2500,()=>o.pause())}if(AC&&mg)mg.gain.setTargetAtTime(0,AC.currentTime,1.2);const e=$("end");["e1","e2","e3"].forEach(i=>$(i).classList.remove("v"));e.classList.remove("rt");e.onclick=null;$("e1").textContent="No es el pozo lo que nos retiene, sino lo que decidimos no saber.";$("e2").textContent="Conocer las reglas no es obedecer a ciegas: es aprender dónde apoyar las manos.";e.classList.add("on");let r=0;const back=()=>{if(r)return;r=1;e.onclick=null;ci=0;li=0;mi=-1;$("stage").className="";$("eyes").className="";fx();$("veil").classList.add("on");$("intro").hidden=false;e.classList.remove("on");$("start").focus()};setTimeout(()=>{if(!r)$("e1").classList.add("v")},2600);setTimeout(()=>{if(!r)$("e2").classList.add("v")},6200);setTimeout(()=>{if(r)return;$("e3").classList.add("v");e.classList.add("rt");e.onclick=back},10500);setTimeout(back,26000)}
 function fx(k){const f=$("fx");f.className=k||"";if(k=="bad"){const b=$("box");b.classList.remove("sh");void b.offsetWidth;b.classList.add("sh")}}
 let skip=null,st=0;
 function scene(){const c=C[ci],p=ci/(C.length-1),t=++st,s=$("stage"),v=$("veil");adv=null;s.classList.add("tr");$("eyes").className="";$("vk").textContent=c.b;$("vt").textContent=c.n;v.classList.remove("on");void v.offsetWidth;v.classList.add("on");setbg(ci+1,p);let a=0,d=0;
@@ -206,7 +215,7 @@ function ask(){const c=C[ci];fx();$("eyes").className="";ui("d","Punto de decisi
 function why(then,lbl){const c=C[ci];ui("g","Fundamento reglamentario",c.f,[[lbl,then]],ci+"-f")}
 function bad(){const c=C[ci];fx("bad");hit(70,1.2,.4);ui("b","✗ Decisión errónea: "+c.e,c.x,[["Ver fundamento",()=>why(ask,"Volver a decidir")]],ci+"-x")}
 function good(){const c=C[ci];fx("ok");hit(392,.7,.16);setTimeout(()=>hit(587,.9,.12),160);ui("o","✓ Resolución correcta",c.r,[["Ver fundamento",()=>why(next,"Continuar")]],ci+"-r")}
-function next(){ci++;if(ci<C.length)return scene();$("eyes").className="";ui("n","Fin","Conoces el mapa. Cada norma que aprendiste es un apoyo para tu camino.",[["Jugar de nuevo",()=>{ci=0;scene()}]])}
+function next(){ci++;if(ci<C.length)return scene();ending()}
 $("box").onclick=nxt;$("veil").onclick=()=>skip&&skip();
 $("vox").onclick=()=>{voz=!voz;$("vox").textContent="Voz: "+(voz?"sí":"no");$("vox").setAttribute("aria-pressed",voz);if(!voz){if(SS)SS.cancel();if(cur){cur.pause();cur=null}}};
 document.addEventListener("keydown",e=>{if((e.key==" "||e.key=="Enter")&&document.activeElement.tagName!="BUTTON"&&(adv||skip)){e.preventDefault();skip?skip():nxt()}});
